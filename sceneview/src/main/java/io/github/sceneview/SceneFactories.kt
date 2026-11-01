@@ -5,7 +5,6 @@ import android.opengl.EGLContext
 import com.google.android.filament.ColorGrading
 import com.google.android.filament.Colors
 import com.google.android.filament.Engine
-import com.google.android.filament.Filament
 import com.google.android.filament.IndirectLight
 import com.google.android.filament.LightManager
 import com.google.android.filament.Renderer
@@ -14,9 +13,7 @@ import com.google.android.filament.ToneMapper
 import com.google.android.filament.View
 import com.google.android.filament.View.AntiAliasing
 import com.google.android.filament.View.QualityLevel
-import com.google.android.filament.gltfio.Gltfio
 import com.google.android.filament.utils.KTX1Loader
-import com.google.android.filament.utils.Utils
 import io.github.sceneview.collision.CollisionSystem
 import io.github.sceneview.environment.Environment
 import io.github.sceneview.gesture.CameraGestureDetector
@@ -32,11 +29,7 @@ import io.github.sceneview.utils.OpenGL
 import io.github.sceneview.utils.readBuffer
 
 // Initialize Filament once (triggered when this file's class is first loaded)
-private val filamentInit: Unit = run {
-    Gltfio.init()
-    Filament.init()
-    Utils.init()
-}
+private val filamentInit: Unit = loadFilamentLibraries()
 
 const val DEFAULT_MAIN_LIGHT_COLOR_TEMPERATURE = 6_500.0f
 
@@ -84,7 +77,7 @@ const val DEFAULT_IBL_INTENSITY = 10_000.0f
 
 fun createEglContext(): EGLContext {
     filamentInit  // ensure init
-    return OpenGL.createEglContext()
+    return EngineWarmUp.takeEglContext() ?: OpenGL.createEglContext()
 }
 
 fun createEngine(eglContext: EGLContext): Engine = Engine.create(eglContext)

@@ -3,6 +3,8 @@ package io.github.sceneview.utils
 import android.opengl.EGL14
 import android.opengl.EGLConfig
 import android.opengl.EGLContext
+import android.opengl.EGLDisplay
+import android.opengl.EGLSurface
 import android.opengl.GLES11Ext
 import android.opengl.GLES30
 
@@ -18,7 +20,10 @@ object OpenGL {
             ?: error("EGL context creation failed")
     }
 
-    fun createEglContext(shareContext: EGLContext?): EGLContext? {
+    fun createEglContext(shareContext: EGLContext?): EGLContext? =
+        createPbufferContext(shareContext).context
+
+    internal fun createPbufferContext(shareContext: EGLContext?): PbufferContext {
         val display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY)
         EGL14.eglInitialize(display, null, 0, null, 0)
         val configs = arrayOfNulls<EGLConfig>(1)
@@ -47,7 +52,27 @@ object OpenGL {
                 context
             )
         ) { "Error making GL context." }
-        return context
+        return PbufferContext(display, context, surface)
+    }
+
+    internal class PbufferContext(
+        val display: EGLDisplay,
+        val context: EGLContext,
+        val surface: EGLSurface,
+    ) {
+        fun makeCurrent(): Boolean = EGL14.eglMakeCurrent(display, surface, surface, context)
+
+        fun releaseFromThisThread() {
+            EGL14.eglMakeCurrent(
+                display, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT
+            )
+            EGL14.eglReleaseThread()
+        }
+
+        fun destroy() {
+            EGL14.eglDestroySurface(display, surface)
+            EGL14.eglDestroyContext(display, context)
+        }
     }
 
     fun createExternalTextureId(): Int {

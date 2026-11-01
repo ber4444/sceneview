@@ -39,8 +39,12 @@ class ModelLoader(
     private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
 
-    val materialProvider = UbershaderProvider(engine)
-    val assetLoader = AssetLoader(engine, materialProvider, EntityManager.get())
+    private val gltfLoaders = lazy {
+        val provider = UbershaderProvider(engine)
+        provider to AssetLoader(engine, provider, EntityManager.get())
+    }
+    val materialProvider: UbershaderProvider get() = gltfLoaders.value.first
+    val assetLoader: AssetLoader get() = gltfLoaders.value.second
     var resourceLoader = ResourceLoader(engine, true)
 
     private val models = java.util.Collections.synchronizedList(mutableListOf<Model>())
@@ -457,9 +461,12 @@ class ModelLoader(
     fun destroy() {
         clear()
 
-        assetLoader.destroy()
-        materialProvider.destroyMaterials()
-        materialProvider.destroy()
+        if (gltfLoaders.isInitialized()) {
+            val (provider, loader) = gltfLoaders.value
+            loader.destroy()
+            provider.destroyMaterials()
+            provider.destroy()
+        }
         resourceLoader.destroy()
     }
 
