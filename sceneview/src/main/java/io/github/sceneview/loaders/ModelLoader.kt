@@ -12,6 +12,7 @@ import com.google.android.filament.gltfio.UbershaderProvider
 import io.github.sceneview.bumpLightGeneration
 import io.github.sceneview.bumpRenderableGeneration
 import io.github.sceneview.bumpTransformGeneration
+import io.github.sceneview.GltfioTextureTables
 import io.github.sceneview.model.Model
 import io.github.sceneview.model.ModelInstance
 import io.github.sceneview.safeDestroyModel
@@ -45,7 +46,7 @@ class ModelLoader(
     }
     val materialProvider: UbershaderProvider get() = gltfLoaders.value.first
     val assetLoader: AssetLoader get() = gltfLoaders.value.second
-    var resourceLoader = ResourceLoader(engine, true)
+    var resourceLoader = GltfioTextureTables.creating { ResourceLoader(engine, true) }
 
     private val models = java.util.Collections.synchronizedList(mutableListOf<Model>())
 //    private val modelInstances = mutableListOf<ModelInstance>()
